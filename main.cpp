@@ -34,14 +34,21 @@ int main() {
                   << " -> " << res.status << std::endl;
     });
 
+
     // ---- 5. Единый формат ошибок ----
     svr.set_error_handler([](const httplib::Request& req, httplib::Response& res) {
-        JObj o;
-        o.int_("status", res.status);
-        o.str("error", "Request failed");
-        o.str("path", req.path);
-        res.set_content(o.str(), "application/json");
+
+        // Если обработчик маршрута уже сформировал ответ с ошибкой,
+        // сохраняем его и не заменяем универсальным сообщением.
+        if (res.body.empty()) {
+            JObj o;
+            o.int_("status", res.status);
+            o.str("error", "Request failed");
+            o.str("path", req.path);
+            res.set_content(o.str(), "application/json");
+        }
     });
+
 
     // ---- 6. Перехват исключений ----
     svr.set_exception_handler(
